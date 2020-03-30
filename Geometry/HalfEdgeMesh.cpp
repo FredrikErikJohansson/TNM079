@@ -25,20 +25,47 @@ HalfEdgeMesh::~HalfEdgeMesh() {}
  * \param[in] v2 vertex 2, Vector3<float>
  * \param[in] v3 vertex 3, Vector3<float>
  */
+
 bool HalfEdgeMesh::AddFace(const std::vector<Vector3<float> > &verts) {
-  // Add your code here
-  std::cerr << "ADD TRIANGLE NOT IMPLEMENTED. ";
 
   // Add the vertices of the face/triangle
+  size_t ind1, ind2, ind3;
+  AddVertex(verts[0], ind1);
+  AddVertex(verts[1], ind2);
+  AddVertex(verts[2], ind3);
 
   // Add all half-edge pairs
+  size_t inner12, inner23, inner31, outer21, outer32, outer13;
+  AddHalfEdgePair(ind1, ind2, inner12, outer21);
+  AddHalfEdgePair(ind2, ind3, inner23, outer32);
+  AddHalfEdgePair(ind3, ind1, inner31, outer13);
 
   // Connect inner ring
+  e(inner12).next = inner23;
+  e(inner12).prev = inner31;
+
+  e(inner23).next = inner31;
+  e(inner23).prev = inner12;
+
+  e(inner31).next = inner12;
+  e(inner31).prev = inner23;
 
   // Finally, create the face, don't forget to set the normal (which should be
   // normalized)
+  Face face;
+  face.edge = inner12;
+
+  Vector3<float> n1 = verts[1] - verts[0];
+  Vector3<float> n2 = verts[2] - verts[0];
+  Vector3<float> norm = Cross(n1, n2).Normalize();
+  face.normal = norm;
+
+  mFaces.push_back(face);
 
   // All half-edges share the same left face (previously added)
+  e(inner12).face = (mFaces.size() - 1);
+  e(inner23).face = (mFaces.size() - 1);
+  e(inner31).face = (mFaces.size() - 1);
 
   // Optionally, track the (outer) boundary half-edges
   // to represent non-closed surfaces
@@ -57,6 +84,7 @@ bool HalfEdgeMesh::AddVertex(const Vector3<float> &v, size_t &indx) {
     indx = (*it).second; // get the index of the already existing vertex
     return false;
   }
+  
 
   mUniqueVerts[v] = indx =
       GetNumVerts(); // op. [ ] constructs a new entry in map
@@ -70,11 +98,12 @@ bool HalfEdgeMesh::AddVertex(const Vector3<float> &v, size_t &indx) {
 /*!
  * Inserts a half edge pair between HalfEdgeMesh::Vertex pointed to by v1 and
  * v2. The first HalfEdgeMesh::HalfEdge (v1->v2) is the inner one, and the
- * second (v2->v1) is the outer. \param [in] v1 vertex 1, Vector3<float> \param
- * [in] v2 vertex 2, Vector3<float> \param [out] indx1  the index to the
- * half-edge from v1 to v2, size_t \param [out] indx2  the index to the
- * half-edge from v2 to v1, size_t \return a bool indicating whether the
- * half-edge pair was successfully inserted (true) or already existed (false)
+ * second (v2->v1) is the outer.
+ * \param [in] v1 vertex 1, Vector3<float>
+ * \param [in] v2 vertex 2, Vector3<float>
+ * \param [out] indx1  the index to the half-edge from v1 to v2, size_t
+ * \param [out] indx2  the index to the half-edge from v2 to v1, size_t
+ * \return a bool indicating whether the half-edge pair was successfully inserted (true) or already existed (false)
  */
 bool HalfEdgeMesh::AddHalfEdgePair(size_t v1, size_t v2, size_t &indx1,
                                    size_t &indx2) {
@@ -225,13 +254,23 @@ HalfEdgeMesh::FindNeighborVertices(size_t vertexIndex) const {
   std::vector<size_t> oneRing;
 
   // Add your code here
+  HalfEdge currentEdge = e(e(v(vertexIndex).edge).next);
+  size_t initialVert = currentEdge.vert;
 
+  while (true) {
+      currentEdge = e(e(e(currentEdge.next).pair).next);
+      size_t currentVert = currentEdge.vert;
+      oneRing.push_back(currentVert);
+
+      if (currentVert == initialVert) break;
+  }
   return oneRing;
 }
 
 /*! \lab1 Implement the FindNeighborFaces */
 /*! Loops over the neighborhood of a vertex and collects all the faces sorted
- * counter clockwise. \param [in] vertexIndex  the index to vertex, size_t
+ * counter clockwise. 
+ * \param [in] vertexIndex  the index to vertex, size_t
  * \return a vector containing the indices to all the found faces.
  */
 std::vector<size_t> HalfEdgeMesh::FindNeighborFaces(size_t vertexIndex) const {
@@ -239,6 +278,17 @@ std::vector<size_t> HalfEdgeMesh::FindNeighborFaces(size_t vertexIndex) const {
   std::vector<size_t> foundFaces;
 
   // Add your code here
+  HalfEdge currentEdge = e(v(vertexIndex).edge);
+  size_t initialFace = currentEdge.face;
+
+  while (true) {
+      currentEdge = e(e(currentEdge.pair).next);
+      size_t currentFace = currentEdge.face;
+      foundFaces.push_back(currentFace);
+
+      if (currentFace == initialFace) break;
+  }
+  
   return foundFaces;
 }
 
@@ -278,7 +328,14 @@ Vector3<float> HalfEdgeMesh::VertexNormal(size_t vertexIndex) const {
   Vector3<float> n(0, 0, 0);
 
   // Add your code here
-  return n;
+  std::vector<size_t> foundFaces = FindNeighborFaces(vertexIndex);
+
+  // loop through every found face 
+  for (size_t i = 0; i < foundFaces.size(); i++) {
+      n += f(foundFaces[i]).normal;
+  }
+
+  return n.Normalize();
 }
 
 void HalfEdgeMesh::Initialize() {
