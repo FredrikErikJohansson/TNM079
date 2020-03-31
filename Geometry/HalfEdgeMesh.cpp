@@ -516,14 +516,17 @@ int HalfEdgeMesh::Shells() const {
     std::set<size_t> allVertSet; 
     std::set<size_t> vertexQueueSet;
     std::set<size_t> vertexTaggedSet;
+    std::vector<size_t> oneRing;
     int shellCount = 0;
 
     for (size_t i = 0; i < mUniqueVerts.size(); i++) {
         allVertSet.insert(i);
     }
 
-    while (!allVertSet.empty()) {
-        vertexQueueSet.insert(*allVertSet.begin());
+    std::set<size_t> diff = allVertSet;
+
+    while (!diff.empty()) {
+        vertexQueueSet.insert(*diff.begin());
         shellCount++;
         while (!vertexQueueSet.empty()) {
 
@@ -531,17 +534,17 @@ int HalfEdgeMesh::Shells() const {
             vertexQueueSet.erase(currentVertex);
             vertexTaggedSet.insert(currentVertex);
 
-            std::vector<size_t> oneRing = FindNeighborVertices(currentVertex);
+            oneRing = FindNeighborVertices(currentVertex);
             for (size_t i = 0; i < oneRing.size(); i++) {
                 if (vertexTaggedSet.find(oneRing[i]) ==
-                    vertexTaggedSet.end()) {  // if oneRing[j] is not in visitedVertSet
+                    vertexTaggedSet.end()) {  // if oneRing[j] is not in vertexTaggedSet
                     vertexQueueSet.insert(oneRing[i]);
                 }
             }
         }
-        allVertSet.clear();
+        diff.clear();
         std::set_difference(allVertSet.begin(), allVertSet.end(), vertexTaggedSet.begin(),
-                            vertexTaggedSet.end(), std::inserter(allVertSet, allVertSet.begin()));
+                            vertexTaggedSet.end(), std::inserter(diff, diff.begin()));
     }
     return shellCount;
 }
