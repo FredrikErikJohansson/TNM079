@@ -253,7 +253,6 @@ HalfEdgeMesh::FindNeighborVertices(size_t vertexIndex) const {
   // Collected vertices, sorted counter clockwise!
   std::vector<size_t> oneRing;
 
-  // Add your code here
   HalfEdge currentEdge = e(e(v(vertexIndex).edge).next);
   size_t initialVert = currentEdge.vert;
 
@@ -277,7 +276,6 @@ std::vector<size_t> HalfEdgeMesh::FindNeighborFaces(size_t vertexIndex) const {
   // Collected faces, sorted counter clockwise!
   std::vector<size_t> foundFaces;
 
-  // Add your code here
   HalfEdge currentEdge = e(v(vertexIndex).edge);
   size_t initialFace = currentEdge.face;
 
@@ -288,56 +286,44 @@ std::vector<size_t> HalfEdgeMesh::FindNeighborFaces(size_t vertexIndex) const {
 
       if (currentFace == initialFace) break;
   }
-  
   return foundFaces;
 }
 
 /*! \lab1 Implement the curvature */
 float HalfEdgeMesh::VertexCurvature(size_t vertexIndex) const {
-  // Copy code from SimpleMesh or compute more accurate estimate
-  /*std::vector<size_t> oneRing = FindNeighborVertices(vertexIndex);
-  assert(oneRing.size() != 0);
+  // Regular Vertex Curvature
+  //std::vector<size_t> oneRing = FindNeighborVertices(vertexIndex);
+  //assert(oneRing.size() != 0);
 
-  size_t curr, next;
-  const Vector3<float> &vi = mVerts.at(vertexIndex).pos;
-  float angleSum = 0;
-  float area = 0;
-  for (size_t i = 0; i < oneRing.size(); i++) {
-    // connections
-    curr = oneRing.at(i);
-    if (i < oneRing.size() - 1)
-      next = oneRing.at(i + 1);
-    else
-      next = oneRing.front();
+  //size_t curr, next;
+  //const Vector3<float> &vi = mVerts.at(vertexIndex).pos;
+  //float angleSum = 0;
+  //float area = 0;
+  //for (size_t i = 0; i < oneRing.size(); i++) {
+  //  // connections
+  //  curr = oneRing.at(i);
+  //  if (i < oneRing.size() - 1)
+  //    next = oneRing.at(i + 1);
+  //  else
+  //    next = oneRing.front();
 
-    // find vertices in 1-ring according to figure 5 in lab text
-    // next - beta
-    const Vector3<float> &nextPos = mVerts.at(next).pos;
-    const Vector3<float> &vj = mVerts.at(curr).pos;
+  //  // find vertices in 1-ring according to figure 5 in lab text
+  //  // next - beta
+  //  const Vector3<float> &nextPos = mVerts.at(next).pos;
+  //  const Vector3<float> &vj = mVerts.at(curr).pos;
 
-    // compute angle and area
-    angleSum += acos((vj - vi) * (nextPos - vi) /
-                     ((vj - vi).Length() * (nextPos - vi).Length()));
-    area += Cross((vi - vj), (nextPos - vj)).Length() * 0.5f;
-  }
-  return (2.0f * static_cast<float>(M_PI) - angleSum) / area;*/
+  //  // compute angle and area
+  //  angleSum += acos((vj - vi) * (nextPos - vi) /
+  //                   ((vj - vi).Length() * (nextPos - vi).Length()));
+  //  area += Cross((vi - vj), (nextPos - vj)).Length() * 0.5f;
+  //}
+  //return (2.0f * static_cast<float>(M_PI) - angleSum) / area;
 
-    //theta = acos(a^2+b^2-c^2)/2ab
-    //a & b are close by vectors
-    //c = (vj - vi);
-    //a = (nextPos - vi);
-    //b = (nextPos - vj);
-    //alphaAngle = acos((a*a)+(b*b)-(c*c))/(2.0f*a*b);
-    //d = (nextPos - parPos);
-    //e = (vi - parPos);
-    //betaAngle = acos((a*a)+(b*b)-(c*c))/(2.0f*a*b);
-
-  // Mean curvature
+  //Mean curvature
   std::vector<size_t> oneRing = FindNeighborVertices(vertexIndex);
   assert(oneRing.size() != 0);
 
   float area = 0.0f;
-  float voronoiArea = 0.0f; 
   size_t curr, next, back;
   float alphaAngle, betaAngle;
   Vector3<float> T;
@@ -356,9 +342,7 @@ float HalfEdgeMesh::VertexCurvature(size_t vertexIndex) const {
     else
         back = oneRing.back();
 
-    // find vertices in 1-ring according to figure 5 in lab text
-    // next - beta
-    // back - alpha
+    // find vertices in 1-ring
     const Vector3<float> &nextPos = v(next).pos;
     const Vector3<float> &pairPos = v(back).pos;
     const Vector3<float> &vj = v(curr).pos;
@@ -401,15 +385,11 @@ Vector3<float> HalfEdgeMesh::FaceNormal(size_t faceIndex) const {
 }
 
 Vector3<float> HalfEdgeMesh::VertexNormal(size_t vertexIndex) const {
-
   Vector3<float> n(0, 0, 0);
-
   std::vector<size_t> foundFaces = FindNeighborFaces(vertexIndex);
-
   for (size_t i = 0; i < foundFaces.size(); i++) {
       n += f(foundFaces[i]).normal;
   }
-
   return n.Normalize();
 }
 
@@ -494,11 +474,13 @@ float HalfEdgeMesh::Area() const {
   float area = 0;
 
   Vector3<float> v0, v1, v2, n1, n2;
+  size_t edgeIndex;
 
   for (int i = 0; i < mFaces.size(); i++) {
-    v0 = v(e(f(i).edge).vert).pos;
-    v1 = v(e(e(f(i).edge).next).vert).pos;
-    v2 = v(e(e(f(i).edge).prev).vert).pos;
+    edgeIndex = f(i).edge;
+    v0 = v(e(edgeIndex).vert).pos;
+    v1 = v(e(e(edgeIndex).next).vert).pos;
+    v2 = v(e(e(edgeIndex).prev).vert).pos;
 
     n1 = v1 - v0;
     n2 = v2 - v0;
@@ -526,7 +508,6 @@ float HalfEdgeMesh::Volume() const {
       vc = (v0 + v1 + v2) / 3.0f;
       volume += (((vc*nc) * area)) / 3.0f;
   }
-
   return volume;
 }
 
@@ -541,20 +522,16 @@ int HalfEdgeMesh::Shells() const {
         allVertSet.insert(i);
     }
 
-    std::set<size_t> diff = allVertSet;
-    std::vector<size_t> oneRing;
-
-    while (!diff.empty()) {
-        vertexQueueSet.insert(*diff.begin());
+    while (!allVertSet.empty()) {
+        vertexQueueSet.insert(*allVertSet.begin());
         shellCount++;
         while (!vertexQueueSet.empty()) {
 
-            auto v = *vertexQueueSet.begin();
-            vertexQueueSet.erase(v);
-            vertexTaggedSet.insert(v);
+            size_t currentVertex = *vertexQueueSet.begin();
+            vertexQueueSet.erase(currentVertex);
+            vertexTaggedSet.insert(currentVertex);
 
-            oneRing = FindNeighborVertices(v);
-
+            std::vector<size_t> oneRing = FindNeighborVertices(currentVertex);
             for (size_t i = 0; i < oneRing.size(); i++) {
                 if (vertexTaggedSet.find(oneRing[i]) ==
                     vertexTaggedSet.end()) {  // if oneRing[j] is not in visitedVertSet
@@ -562,26 +539,19 @@ int HalfEdgeMesh::Shells() const {
                 }
             }
         }
-
-        diff.clear();
+        allVertSet.clear();
         std::set_difference(allVertSet.begin(), allVertSet.end(), vertexTaggedSet.begin(),
-                            vertexTaggedSet.end(), std::inserter(diff, diff.begin()));
+                            vertexTaggedSet.end(), std::inserter(allVertSet, allVertSet.begin()));
     }
-  
     return shellCount;
 }
 
 /*! \lab1 Implement the genus */
 size_t HalfEdgeMesh::Genus() const {
-  // Add code here
-  // L number of loops
-  // S number of shells
-  // V unique vertices, E edges, F faces 
-  
-  size_t S = Shells();
   size_t V = mUniqueVerts.size();
   size_t E = mUniqueEdgePairs.size();
   size_t F = mFaces.size();
+  size_t S = Shells();
   size_t G = -(V - E + F - 2 * S) / 2;
 
   return G;
