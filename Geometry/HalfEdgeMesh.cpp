@@ -251,6 +251,7 @@ void HalfEdgeMesh::Validate() {
 std::vector<size_t>
 HalfEdgeMesh::FindNeighborVertices(size_t vertexIndex) const {
   // Collected vertices, sorted counter clockwise!
+    //TODO: Edge iterator
   std::vector<size_t> oneRing;
 
   HalfEdge currentEdge = e(e(v(vertexIndex).edge).next);
@@ -291,7 +292,7 @@ std::vector<size_t> HalfEdgeMesh::FindNeighborFaces(size_t vertexIndex) const {
 
 /*! \lab1 Implement the curvature */
 float HalfEdgeMesh::VertexCurvature(size_t vertexIndex) const {
-  // Regular Vertex Curvature
+  // Gaussian Vertex Curvature
   //std::vector<size_t> oneRing = FindNeighborVertices(vertexIndex);
   //assert(oneRing.size() != 0);
 
@@ -319,11 +320,12 @@ float HalfEdgeMesh::VertexCurvature(size_t vertexIndex) const {
   //}
   //return (2.0f * static_cast<float>(M_PI) - angleSum) / area;
 
-  //Mean curvature
+  // Mean curvature
   std::vector<size_t> oneRing = FindNeighborVertices(vertexIndex);
   assert(oneRing.size() != 0);
 
   float area = 0.0f;
+  float voronoiArea = 0.0f;
   size_t curr, next, back;
   float alphaAngle, betaAngle;
   Vector3<float> T;
@@ -347,16 +349,18 @@ float HalfEdgeMesh::VertexCurvature(size_t vertexIndex) const {
     const Vector3<float> &pairPos = v(back).pos;
     const Vector3<float> &vj = v(curr).pos;
 
-    betaAngle = Cotangent(vi, vj, nextPos);
+    betaAngle = Cotangent(vi, nextPos, vj);
     alphaAngle = Cotangent(vi, pairPos, vj);
 
     T += (alphaAngle+betaAngle)*(vj - vi);
 
-    area += ((alphaAngle + betaAngle) * (vj - vi).Length()) / 8.0f;
-  }
+    // Ekvation 10
+    voronoiArea += (alphaAngle + betaAngle) * (vj - vi).Length() * (vj - vi).Length();
+   }
 
-  return (T / (4.0f * area)).Length();
-  
+    float Av = voronoiArea / 8.0f;
+    float Hn = T.Length() / (Av * 4);
+    return Hn;
 }
 
 float HalfEdgeMesh::FaceCurvature(size_t faceIndex) const {
@@ -551,6 +555,7 @@ int HalfEdgeMesh::Shells() const {
 
 /*! \lab1 Implement the genus */
 size_t HalfEdgeMesh::Genus() const {
+    //TODO: make static_cast and signed type
   size_t V = mUniqueVerts.size();
   size_t E = mUniqueEdgePairs.size();
   size_t F = mFaces.size();
