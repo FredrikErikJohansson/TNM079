@@ -49,7 +49,48 @@ void QuadricDecimationMesh::computeCollapse(EdgeCollapse *collapse) {
   // Compute collapse->position and collapse->cost here
   // based on the quadrics at the edge endpoints
 
-  std::cerr << "computeCollapse in QuadricDecimationMesh not implemented.\n";
+  Matrix4x4<float> Q1 = createQuadricForVert(e(collapse->halfEdge).vert);
+  Matrix4x4<float> Q2 = createQuadricForVert(e(e(collapse->halfEdge).pair).vert);
+  //Calculate new vert
+  //collapse->position = vert
+  //
+  // Set union of Q1 and Q2 as long as both are disjoint
+  //Matrix4x4<float> Q = Q1+Q2; 
+  Matrix4x4<float> Q = Q1 + Q2; 
+  Vector3<float> vert;
+
+  const Vector3<float> &v0 = v(e(collapse->halfEdge).vert).pos;
+  const Vector3<float> &v1 = v(e(e(collapse->halfEdge).pair).vert).pos;
+
+  bool notInvertible = Q.IsSingular();
+
+  // Does have an inverse
+  if (!notInvertible) {
+      Matrix4x4<float> Qi = Q.Inverse();
+      for (size_t i = 0; i < 3; i++) {
+          vert[i] = Qi(i, 3);
+      }
+  } 
+  else  // Choose v_hat from amongst the endpoints and the midpoint
+  {
+      vert = (v0 + v1) * 0.5;
+      
+      (collapse->position - v0).Length();
+  }
+
+  collapse->position = vert;
+
+
+  float error = 0;
+  Vector4<float> dummy = {vert[0], vert[1], vert[2], 1};
+
+  for (int i = 0; i < 4; i++) {
+      for (int j = 0; j < 4; j++) {
+          error += (Q(i, j) * dummy[i]) * dummy[j];
+      }
+  }
+
+  collapse->cost = error;	
 }
 
 /*! After each edge collapse the vertex properties need to be updated */
@@ -68,6 +109,14 @@ QuadricDecimationMesh::createQuadricForVert(size_t indx) const {
 
   // The quadric for a vertex is the sum of all the quadrics for the adjacent
   // faces Tip: Matrix4x4 has an operator +=
+
+  std::vector<size_t> faces = FindNeighborFaces(indx);
+
+  for(auto face : faces)
+  {
+	  Q += createQuadricForFace(face);
+  }
+
   return Q;
 }
 
@@ -79,7 +128,23 @@ QuadricDecimationMesh::createQuadricForFace(size_t indx) const {
 
   // Calculate the quadric (outer product of plane parameters) for a face
   // here using the formula from Garland and Heckbert
-  return Matrix4x4<float>();
+
+  const Vector3<float> &v0 = v(e(f(indx).edge).vert).pos;
+  const Vector3<float> &n = f(indx).normal;
+  float d = -(v0*n);
+	
+  //p = [a b c d]^T
+  Vector4<float> p = {f(indx).normal[0], f(indx).normal[1], f(indx).normal[2], d};
+
+  //Kp = pp^T
+  Matrix4x4<float> Kp;
+  // i rader, j kolumner
+  for (size_t i = 0; i < 4; i++) {
+    for(size_t j = 0; j < 4; j++) {
+	    Kp(i,j) = p[i]*p[j]; 
+    }
+  }
+  return Kp;
 }
 
 void QuadricDecimationMesh::Render() {

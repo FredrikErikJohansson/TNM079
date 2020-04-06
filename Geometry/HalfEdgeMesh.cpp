@@ -291,7 +291,7 @@ std::vector<size_t> HalfEdgeMesh::FindNeighborFaces(size_t vertexIndex) const {
 
 /*! \lab1 Implement the curvature */
 float HalfEdgeMesh::VertexCurvature(size_t vertexIndex) const {
-  // Regular Vertex Curvature
+  // Gaussian Vertex Curvature
   //std::vector<size_t> oneRing = FindNeighborVertices(vertexIndex);
   //assert(oneRing.size() != 0);
 
@@ -314,19 +314,20 @@ float HalfEdgeMesh::VertexCurvature(size_t vertexIndex) const {
 
   //  // compute angle and area
   //  angleSum += acos((vj - vi) * (nextPos - vi) /
-  //                   ((vj - vi).Length() * (nextPos - vi).Length()));
+  //                  ((vj - vi).Length() * (nextPos - vi).Length()));
   //  area += Cross((vi - vj), (nextPos - vj)).Length() * 0.5f;
   //}
+
   //return (2.0f * static_cast<float>(M_PI) - angleSum) / area;
 
-  //Mean curvature
+  // Mean curvature
   std::vector<size_t> oneRing = FindNeighborVertices(vertexIndex);
   assert(oneRing.size() != 0);
 
   float area = 0.0f;
   size_t curr, next, back;
   float alphaAngle, betaAngle;
-  Vector3<float> T;
+  Vector3<float> T{};
   const Vector3<float> &vi = v(vertexIndex).pos;
 
   for (size_t i = 0; i < oneRing.size(); i++) {
@@ -344,15 +345,18 @@ float HalfEdgeMesh::VertexCurvature(size_t vertexIndex) const {
 
     // find vertices in 1-ring
     const Vector3<float> &nextPos = v(next).pos;
-    const Vector3<float> &pairPos = v(back).pos;
+    const Vector3<float> &prevPos = v(back).pos;
     const Vector3<float> &vj = v(curr).pos;
 
+    //betaAngle = Cotangent(vi, nextPos, vj );
+    //alphaAngle = Cotangent(vi, prevPos, vj);
+
     betaAngle = Cotangent(vi, vj, nextPos);
-    alphaAngle = Cotangent(vi, pairPos, vj);
+    alphaAngle = Cotangent(vi, prevPos, vj);
 
-    T += (alphaAngle+betaAngle)*(vj - vi);
+    T += (alphaAngle+betaAngle)*(vi- vj);
 
-    area += ((alphaAngle + betaAngle) * (vj - vi).Length()) / 8.0f;
+    area += ((alphaAngle + betaAngle) * (vi - vj).Length()) / 8.0f;
   }
 
   return (T / (4.0f * area)).Length();
@@ -551,10 +555,10 @@ int HalfEdgeMesh::Shells() const {
 
 /*! \lab1 Implement the genus */
 size_t HalfEdgeMesh::Genus() const {
-  size_t V = mUniqueVerts.size();
-  size_t E = mUniqueEdgePairs.size();
-  size_t F = mFaces.size();
-  size_t S = Shells();
+  int V = mUniqueVerts.size();
+  int E = mUniqueEdgePairs.size();
+  int F = mFaces.size();
+  int S = Shells();
   size_t G = -(V - E + F - 2 * S) / 2;
 
   return G;
