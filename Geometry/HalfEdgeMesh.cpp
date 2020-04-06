@@ -511,9 +511,9 @@ float HalfEdgeMesh::Volume() const {
       area = 0.5f * Cross(n1, n2).Length();
       nc = f(i).normal;
       vc = (v0 + v1 + v2) / 3.0f;
-      volume += (((vc*nc) * area)) / 3.0f;
+      volume += (((vc*nc) * area));
   }
-  return volume;
+  return volume / 3.0f;
 }
 
 /*! \lab1 Calculate the number of shells  */
