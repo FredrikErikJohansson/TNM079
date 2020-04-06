@@ -251,6 +251,7 @@ void HalfEdgeMesh::Validate() {
 std::vector<size_t>
 HalfEdgeMesh::FindNeighborVertices(size_t vertexIndex) const {
   // Collected vertices, sorted counter clockwise!
+    //TODO: Edge iterator
   std::vector<size_t> oneRing;
 
   HalfEdge currentEdge = e(e(v(vertexIndex).edge).next);
@@ -325,6 +326,7 @@ float HalfEdgeMesh::VertexCurvature(size_t vertexIndex) const {
   assert(oneRing.size() != 0);
 
   float area = 0.0f;
+  float voronoiArea = 0.0f;
   size_t curr, next, back;
   float alphaAngle, betaAngle;
   Vector3<float> T{};
@@ -345,22 +347,21 @@ float HalfEdgeMesh::VertexCurvature(size_t vertexIndex) const {
 
     // find vertices in 1-ring
     const Vector3<float> &nextPos = v(next).pos;
-    const Vector3<float> &prevPos = v(back).pos;
+    const Vector3<float> &pairPos = v(back).pos;
     const Vector3<float> &vj = v(curr).pos;
 
-    //betaAngle = Cotangent(vi, nextPos, vj );
-    //alphaAngle = Cotangent(vi, prevPos, vj);
-
-    betaAngle = Cotangent(vi, vj, nextPos);
-    alphaAngle = Cotangent(vi, prevPos, vj);
+    betaAngle = Cotangent(vi, nextPos, vj);
+    alphaAngle = Cotangent(vi, pairPos, vj);
 
     T += (alphaAngle+betaAngle)*(vi- vj);
 
-    area += ((alphaAngle + betaAngle) * (vi - vj).Length()) / 8.0f;
-  }
+    // Ekvation 10
+    voronoiArea += (alphaAngle + betaAngle) * (vj - vi).Length() * (vj - vi).Length();
+   }
 
-  return (T / (4.0f * area)).Length();
-  
+    float Av = voronoiArea / 8.0f;
+    float Hn = T.Length() / (Av * 4);
+    return Hn;
 }
 
 float HalfEdgeMesh::FaceCurvature(size_t faceIndex) const {
@@ -555,10 +556,10 @@ int HalfEdgeMesh::Shells() const {
 
 /*! \lab1 Implement the genus */
 size_t HalfEdgeMesh::Genus() const {
-  int V = mUniqueVerts.size();
-  int E = mUniqueEdgePairs.size();
-  int F = mFaces.size();
-  int S = Shells();
+  int V = static_cast<int>(mUniqueVerts.size());
+  int E = static_cast<int>(mUniqueEdgePairs.size());
+  int F = static_cast<int>(mFaces.size());
+  int S = static_cast<int>(Shells());
   size_t G = -(V - E + F - 2 * S) / 2;
 
   return G;
