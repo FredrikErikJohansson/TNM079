@@ -49,47 +49,44 @@ void QuadricDecimationMesh::computeCollapse(EdgeCollapse *collapse) {
   // Compute collapse->position and collapse->cost here
   // based on the quadrics at the edge endpoints
 
-  Matrix4x4<float> Q1 = createQuadricForVert(e(collapse->halfEdge).vert);
-  Matrix4x4<float> Q2 = createQuadricForVert(e(e(collapse->halfEdge).pair).vert);
-  //Calculate new vert
-  //collapse->position = vert
-  //
-  // Set union of Q1 and Q2 as long as both are disjoint
-  //Matrix4x4<float> Q = Q1+Q2; 
+  const int ind1 = e(collapse->halfEdge).vert;
+  const int ind2 = e(e(collapse->halfEdge).pair).vert;
+
+  Matrix4x4<float> Q1 = mQuadrics.at(ind1);
+  Matrix4x4<float> Q2 = mQuadrics.at(ind2);
   Matrix4x4<float> Q = Q1 + Q2; 
-  Vector3<float> vert;
+  Vector4<float> vert;
 
-  const Vector3<float> &v0 = v(e(collapse->halfEdge).vert).pos;
-  const Vector3<float> &v1 = v(e(e(collapse->halfEdge).pair).vert).pos;
-
-  bool notInvertible = Q.IsSingular();
+  const Vector3<float> &v0 = v(ind1).pos;
+  const Vector3<float> &v1 = v(ind2).pos;
+  float d0 = INT_MAX;
+  float epsilon = 1e-6;
 
   // Does have an inverse
-  if (!notInvertible) {
+  if (!Q.IsSingular()) {
       Matrix4x4<float> Qi = Q.Inverse();
-      for (size_t i = 0; i < 3; i++) {
-          vert[i] = Qi(i, 3);
-      }
-  } 
-  else  // Choose v_hat from amongst the endpoints and the midpoint
-  {
-      vert = (v0 + v1) * 0.5;
-      
-      (collapse->position - v0).Length();
+      vert = {Qi(0, 3), Qi(1, 3), Qi(2, 3), 1};
+      d0 = vert * (Q * vert);
   }
 
-  collapse->position = vert;
+  Vector4<float> c1 = {v0[0], v0[1], v0[2], 1};
+  Vector4<float> c2 = {v1[0], v1[1], v1[2], 1};
+  Vector3<float> help = (v0 + v1) * 0.5;
+  Vector4<float> c3 = {help[0], help[1], help[2], 1};
+  
+  float d1 = c1 *(Q * c1);
+  float d2 = c2 * (Q * c2);
+  float d3 = c3 * (Q * c3);
+  float error = std::min(d0, std::min(d1, std::min(d2, d3)));
 
+  if (error <= d1 + epsilon && error >= d1 - epsilon)
+      vert = c1;
+  else if (error <= d2 + epsilon && error >= d2 - epsilon)
+      vert = c2;
+  else if (error <= d3 + epsilon && error >= d3 - epsilon)
+      vert = c3;
 
-  float error = 0;
-  Vector4<float> dummy = {vert[0], vert[1], vert[2], 1};
-
-  for (int i = 0; i < 4; i++) {
-      for (int j = 0; j < 4; j++) {
-          error += (Q(i, j) * dummy[i]) * dummy[j];
-      }
-  }
-
+  collapse->position = {vert[0], vert[1], vert[2]};
   collapse->cost = error;	
 }
 
@@ -130,20 +127,27 @@ QuadricDecimationMesh::createQuadricForFace(size_t indx) const {
   // here using the formula from Garland and Heckbert
 
   const Vector3<float> &v0 = v(e(f(indx).edge).vert).pos;
+  const Vector3<float> &v1 = v(e(e(f(indx).edge).next).vert).pos;
+  const Vector3<float> &v2 = v(e(e(e(f(indx).edge).next).next).vert).pos;
   const Vector3<float> &n = f(indx).normal;
-  float d = -(v0*n);
+  float d = -(((v0 + v1 + v2) / 3.0f) * n);
+  float detailFactor = 1;
 	
-  //p = [a b c d]^T
   Vector4<float> p = {f(indx).normal[0], f(indx).normal[1], f(indx).normal[2], d};
-
-  //Kp = pp^T
   Matrix4x4<float> Kp;
-  // i rader, j kolumner
+  
+  // Task 4:
+  /*if (indx > mFaces.size() / 2)
+      detailFactor = 20;
+  else
+      detailFactor = 1;*/
+
   for (size_t i = 0; i < 4; i++) {
     for(size_t j = 0; j < 4; j++) {
-	    Kp(i,j) = p[i]*p[j]; 
+      Kp(i, j) = p[i] * p[j] * detailFactor; 
     }
   }
+
   return Kp;
 }
 
@@ -155,12 +159,40 @@ void QuadricDecimationMesh::Render() {
 
   if (mVisualizationMode == QuadricIsoSurfaces) {
     // Apply transform
-    glPushMatrix(); // Push modelview matrix onto stack
+    //glPushMatrix(); // Push modelview matrix onto stack
 
     // Implement the quadric visualization here
-    std::cout << "Quadric visualization not implemented" << std::endl;
+    Matrix4x4<float> Q; 
+    Matrix4x4<float> R; 
+    Vector3<float> x;
+    Vector4<float> y;
+    GLfloat ellipsoid[16];
 
-    // Restore modelview matrix
-    glPopMatrix();
+    for (int i = 0; i < mVerts.size(); i++) {
+      Q = mQuadrics.at(i);
+
+      if (Q.CholeskyFactorization(R) && !isVertexCollapsed(i)) {
+        x = v(i).pos;
+        Vector4<float> x4 = {x[0], x[1], x[2], 1};
+        y = R * x4;
+        R = R.Inverse().ToGLMatrix();
+        float radius = y * y;
+
+        int ind = 0;
+        for (int j = 0; j < 4; j++) {
+          for (int k = 0; k < 4; k++) {
+            ellipsoid[ind] = R(j, k) * radius;
+            ind++;
+          }
+        }
+        glColor3f(0.3f, 1.0f, 0.6f);
+        GLUquadric *quad;
+        quad = gluNewQuadric();
+        glPushMatrix();
+        glMultMatrixf(ellipsoid);
+        gluSphere(quad, 1, 6, 6);
+        glPopMatrix();
+      } 
+    }
   }
 }
