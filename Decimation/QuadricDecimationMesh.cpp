@@ -167,6 +167,8 @@ void QuadricDecimationMesh::Render() {
     Vector3<float> x;
     Vector4<float> y;
     GLfloat ellipsoid[16];
+    GLUquadric *quad;
+    quad = gluNewQuadric();
 
     for (int i = 0; i < mVerts.size(); i++) {
       Q = mQuadrics.at(i);
@@ -186,8 +188,6 @@ void QuadricDecimationMesh::Render() {
           }
         }
         glColor3f(0.3f, 1.0f, 0.6f);
-        GLUquadric *quad;
-        quad = gluNewQuadric();
         glPushMatrix();
         glMultMatrixf(ellipsoid);
         gluSphere(quad, 1, 6, 6);
