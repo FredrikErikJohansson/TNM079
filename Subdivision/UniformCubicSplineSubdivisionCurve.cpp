@@ -16,10 +16,22 @@ void UniformCubicSplineSubdivisionCurve::Subdivide() {
   assert(mCoefficients.size() > 4 && "Need at least 5 points to subdivide");
 
   // Implement the subdivision scheme for a natural cubic spline here
+  Vector3<float> c;
+  Vector3<float> cHalf;
 
-  // If 'mCoefficients' had size N, how large should 'newc' be? Perform a check
-  // here!
-  assert(true && "Incorrect number of new coefficients!");
+  for (int i = 0; i < mCoefficients.size(); i++) {
+  	// Each “old” coefficient (c) will be re-weighted and between every two old coefficients a new one (cHalf) will be inserted
+    c = (1.0f / 8.0f) * (mCoefficients[(i == 0) ? i : i - 1] + 6.0f * mCoefficients[i] +
+                             mCoefficients[(i == mCoefficients.size() - 1) ? i : i + 1]);
+    cHalf = (1.0f / 8.0f) * (4.0f * mCoefficients[i] +
+                                 4.0f * mCoefficients[(i == mCoefficients.size() - 1) ? i : i + 1]);
+
+    newc.push_back(c);
+    if (i != mCoefficients.size() - 1) newc.push_back(cHalf);	  
+  }
+
+  // If 'mCoefficients' had size N, how large should 'newc' be? Perform a check here!
+  assert(newc.size() == 2 * mCoefficients.size() - 1 && "Incorrect number of new coefficients!");
 
   mCoefficients = newc;
 }

@@ -46,11 +46,14 @@ float UniformCubicSpline::GetBSplineValue(size_t i, float t) {
 Vector3<float> UniformCubicSpline::GetValue(float t) {
   Vector3<float> val;
   float sum = 0;
-  for (size_t i = 0; i < mCoefficients.size(); i++) {
-    float bval = GetBSplineValue(i, t);
-    val += mCoefficients.at(i) * bval;
-    sum += bval;
+
+  //Check closest two basis function in both directions
+  for (size_t i = (t - 2 < 0) ? 0 : t - 2; i < ((t + 2 >= mCoefficients.size()) ? mCoefficients.size() : t + 2); i++) {
+      float bval = GetBSplineValue(i, t);
+      val += mCoefficients.at(i) * bval;
+      sum += bval;
   }
+
   return val;
 }
 
