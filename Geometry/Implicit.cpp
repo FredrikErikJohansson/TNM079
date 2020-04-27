@@ -62,7 +62,7 @@ void Implicit::Update() {
         verts.at(i).normal =
             Vector3<float>(nObject[0], nObject[1], nObject[2]).Normalize();
       }
-
+      
       ptr->mAutoMinMax = mAutoMinMax;
       ptr->mMinCMap = mMinCMap;
       ptr->mMaxCMap = mMaxCMap;
@@ -92,20 +92,30 @@ void Implicit::Initialize() {
  * Evaluates gradient at (x,y,z) through discrete finite difference scheme.
  */
 Vector3<float> Implicit::GetGradient(float x, float y, float z) const {
-  // Implement finite difference evaluation of gradient at world coordinates
-  // (x,y,z) Use mDelta variable as epsilon in eqn. 16 in lab text
-  std::cerr << "Implicit::GetGradient() not implemented" << std::endl;
-  return Vector3<float>(0, 0, 0);
+    float Dx = (GetValue(x + mDelta, mDelta, mDelta) - GetValue(x - mDelta, -mDelta, -mDelta)) /
+               (2 * mDelta);
+    float Dy = (GetValue(mDelta, y + mDelta, mDelta) - GetValue(-mDelta, y - mDelta, -mDelta)) /
+             (2 * mDelta);
+    float Dz = (GetValue(mDelta, mDelta, z + mDelta) - GetValue(-mDelta, -mDelta, z - mDelta)) /
+               (2 * mDelta);
+    
+  return Vector3<float>(Dx, Dy, Dz).Normalize();
 }
 
 /*!
  * Evaluates curvature at (x,y,z) through discrete finite difference scheme.
  */
 float Implicit::GetCurvature(float x, float y, float z) const {
-  // Implement finite difference evaluation of curvature at world coordinates
-  // (x,y,z) Use mDelta variable as epsilon in eqn. 16 in lab text
-  std::cerr << "Implicit::GetCurvature() not implemented" << std::endl;
-  return 0;
+    float Dxx = (GetValue(x + mDelta, mDelta, mDelta) - 2 * GetValue(x, 0, 0) +
+                 GetValue(x - mDelta, -mDelta, -mDelta)) /
+                (mDelta * mDelta);
+  float Dyy = (GetValue(mDelta, y + mDelta, mDelta) - 2 * GetValue(0, y, 0) +
+               GetValue(-mDelta, y - mDelta, -mDelta)) /
+              (mDelta * mDelta);
+    float Dzz = (GetValue(mDelta, mDelta, z + mDelta) - 2 * GetValue(0, 0, z) +
+                 GetValue(-mDelta, -mDelta, z - mDelta)) /
+                (mDelta * mDelta);
+  return Dxx + Dyy + Dzz;
 }
 
 float Implicit::ComputeArea(float dx) const { return 0; }

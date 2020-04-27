@@ -14,6 +14,7 @@
 #define __CSG_H__
 
 #include "Geometry/Implicit.h"
+#include <cmath>
 
 /*! \brief CSG Operator base class */
 class CSG_Operator : public Implicit {
@@ -36,14 +37,8 @@ public:
   }
 
   virtual float GetValue(float x, float y, float z) const {
-    // The coordinates (x,y,z) are passed in from world space,
-    // remember to transform them into object space
-    // (Hint: Implicit::TransformW2O()). This
-    // is needed because the CSG operators are also implicit geometry
-    // and can be transformed like all implicit surfaces.
-    // Then, get values from left and right children and perform the
-    // boolean operation.
-    return 0;
+    TransformW2O(x, y, z);
+    return (std::min(left->GetValue(x,y,z), right->GetValue(x,y,z)));
   }
 };
 
@@ -54,7 +49,10 @@ public:
     mBox = BoxIntersection(l->GetBoundingBox(), r->GetBoundingBox());
   }
 
-  virtual float GetValue(float x, float y, float z) const { return 0; }
+  virtual float GetValue(float x, float y, float z) const { 
+    TransformW2O(x, y, z);
+    return (std::max(left->GetValue(x,y,z), right->GetValue(x,y,z)));
+  }
 };
 
 /*! \brief Difference boolean operation */
@@ -64,7 +62,10 @@ public:
     mBox = l->GetBoundingBox();
   }
 
-  virtual float GetValue(float x, float y, float z) const { return 0; }
+  virtual float GetValue(float x, float y, float z) const {
+    TransformW2O(x, y, z);
+    return (std::max(left->GetValue(x,y,z), -right->GetValue(x,y,z)));
+  }
 };
 
 /*! \brief BlendedUnion boolean operation */
@@ -75,7 +76,13 @@ public:
     mBox = BoxUnion(l->GetBoundingBox(), r->GetBoundingBox());
   }
 
-  virtual float GetValue(float x, float y, float z) const { return 0; }
+  virtual float GetValue(float x, float y, float z) const {
+    TransformW2O(x, y, z);
+    float Da = exp(-left->GetValue(x, y, z));
+    float Db = exp(-right->GetValue(x, y, z));
+    float val = std::pow((std::pow(Da, mBlend) + std::pow(Db, mBlend)), (1.0f / mBlend));
+  	return 1 - val;
+  }
 
 protected:
   int mBlend;
@@ -89,7 +96,13 @@ public:
     mBox = BoxUnion(l->GetBoundingBox(), r->GetBoundingBox());
   }
 
-  virtual float GetValue(float x, float y, float z) const { return 0; }
+  virtual float GetValue(float x, float y, float z) const {
+      TransformW2O(x, y, z);
+      float Da = exp(-left->GetValue(x, y, z));
+      float Db = exp(-right->GetValue(x, y, z));
+      float val = std::pow((std::pow(Da, -mBlend) + std::pow(Db, -mBlend)), (-1.0f / mBlend));
+      return 1 - val;
+  }
 
 protected:
   int mBlend;
@@ -103,7 +116,13 @@ public:
     mBox = l->GetBoundingBox();
   }
 
-  virtual float GetValue(float x, float y, float z) const { return 0; }
+  virtual float GetValue(float x, float y, float z) const {
+      TransformW2O(x, y, z);
+      float Da = exp(-left->GetValue(x, y, z));
+      float Db = exp(-right->GetValue(x, y, z));
+      float val = std::pow((std::pow(Da, mBlend) - std::pow(Db, mBlend)), (1.0f / mBlend));
+      return 1 - val;
+  }
 
 protected:
   int mBlend;
