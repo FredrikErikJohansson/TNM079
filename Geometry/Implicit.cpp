@@ -92,28 +92,28 @@ void Implicit::Initialize() {
  * Evaluates gradient at (x,y,z) through discrete finite difference scheme.
  */
 Vector3<float> Implicit::GetGradient(float x, float y, float z) const {
-    float Dx = (GetValue(x + mDelta, mDelta, mDelta) - GetValue(x - mDelta, -mDelta, -mDelta)) /
+    float Dx = (GetValue(x + mDelta, y, z) - GetValue(x - mDelta, y, z)) /
                (2 * mDelta);
-    float Dy = (GetValue(mDelta, y + mDelta, mDelta) - GetValue(-mDelta, y - mDelta, -mDelta)) /
+    float Dy = (GetValue(x, y + mDelta, z) - GetValue(x, y - mDelta, z)) /
              (2 * mDelta);
-    float Dz = (GetValue(mDelta, mDelta, z + mDelta) - GetValue(-mDelta, -mDelta, z - mDelta)) /
+    float Dz = (GetValue(x, y, z + mDelta) - GetValue(x, y, z - mDelta)) /
                (2 * mDelta);
     
-  return Vector3<float>(Dx, Dy, Dz).Normalize();
+  return Vector3<float>(Dx, Dy, Dz);
 }
 
 /*!
  * Evaluates curvature at (x,y,z) through discrete finite difference scheme.
  */
 float Implicit::GetCurvature(float x, float y, float z) const {
-    float Dxx = (GetValue(x + mDelta, mDelta, mDelta) - 2 * GetValue(x, 0, 0) +
-                 GetValue(x - mDelta, -mDelta, -mDelta)) /
+    float Dxx = (GetValue(x + mDelta, y, z) - 2 * GetValue(x, y, z) +
+                 GetValue(x - mDelta, y, z)) /
                 (mDelta * mDelta);
-  float Dyy = (GetValue(mDelta, y + mDelta, mDelta) - 2 * GetValue(0, y, 0) +
-               GetValue(-mDelta, y - mDelta, -mDelta)) /
+  float Dyy = (GetValue(x, y + mDelta, z) - 2 * GetValue(x, y, z) +
+               GetValue(x, y - mDelta, z)) /
               (mDelta * mDelta);
-    float Dzz = (GetValue(mDelta, mDelta, z + mDelta) - 2 * GetValue(0, 0, z) +
-                 GetValue(-mDelta, -mDelta, z - mDelta)) /
+    float Dzz = (GetValue(x, y, z + mDelta) - 2 * GetValue(x, y, z) +
+                 GetValue(x, y, z - mDelta)) /
                 (mDelta * mDelta);
   return Dxx + Dyy + Dzz;
 }
