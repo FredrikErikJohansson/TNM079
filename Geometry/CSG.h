@@ -119,8 +119,8 @@ public:
   virtual float GetValue(float x, float y, float z) const {
       TransformW2O(x, y, z);
       float Da = exp(-left->GetValue(x, y, z));
-      float Db = exp(-right->GetValue(x, y, z));
-      float val = std::pow((std::pow(Da, mBlend) - std::pow(Db, mBlend)), (1.0f / mBlend));
+      float Db = exp(right->GetValue(x, y, z));
+      float val = std::pow((std::pow(Da, mBlend) + std::pow(Db, mBlend)), (1.0f / mBlend));
       return 1 - val;
   }
 

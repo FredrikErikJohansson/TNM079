@@ -746,7 +746,7 @@ void FrameMain::AddObjectQuadricPlane(wxCommandEvent &event) {
   Matrix4x4<float> M(m);
 
   Quadric *Q = new Quadric(M);
-  Q->SetBoundingBox(Bbox(-1, 1));
+  Q->SetBoundingBox(Bbox(-2, 2));
   Q->SetMeshSampling(GetMeshSampling());
   Q->SetDifferentialScale(GetDifferentialScale());
   Q->Triangulate<SimpleMesh>();
@@ -762,7 +762,6 @@ void FrameMain::AddObjectQuadricCylinder(wxCommandEvent &event) {
                            {0.0f, 0.0f, 0.0f, -1.0f}};
   Matrix4x4<float> M(m);
     
-
   Quadric *Q = new Quadric(M);
   Q->SetBoundingBox(Bbox(-1, 1));
   Q->SetMeshSampling(GetMeshSampling());
