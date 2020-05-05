@@ -37,7 +37,9 @@ public:
   virtual float ComputeTimestep() {
     // Compute and return a stable timestep
     // (Hint: Function3D::GetMaxValue())
-    return 1;
+      float dX = mLS->GetDx();
+      Vector3<float> maxes = mVectorField->GetMaxValue();
+      return (dX / std::max(abs(maxes[0]), std::max(abs(maxes[1]), abs(maxes[2]))));
   }
 
   virtual void Propagate(float time) {
@@ -58,13 +60,24 @@ public:
   }
 
   virtual float Evaluate(size_t i, size_t j, size_t k) {
-    // Compute the rate of change (dphi/dt)
+      // Compute the rate of change (dphi/dt)
 
-    // Remember that the point (i,j,k) is given in grid coordinates, while
-    // the velocity field used for advection needs to be sampled in
-    // world coordinates (x,y,z). You can use LevelSet::TransformGridToWorld()
-    // for this task.
-    return 0;
+      // Remember that the point (i,j,k) is given in grid coordinates, while
+      // the velocity field used for advection needs to be sampled in
+      // world coordinates (x,y,z). You can use LevelSet::TransformGridToWorld()
+      // for this task.
+      float x = i;
+      float y = j;
+      float z = k;
+
+      mLS->TransformGridToWorld(x, y, z);
+      Vector3<float> v = mVectorField->GetValue(x, y, z);
+      Vector3<float> gradient = {0, 0, 0};
+      gradient[0] = (v[0] >= 0) ? mLS->DiffXm(i, j, k) : mLS->DiffXp(i, j, k);
+      gradient[1] = (v[1] >= 0) ? mLS->DiffYm(i, j, k) : mLS->DiffYp(i, j, k);
+      gradient[2] = (v[2] >= 0) ? mLS->DiffZm(i, j, k) : mLS->DiffZp(i, j, k);
+
+     return ((-v) * gradient);
   }
 };
 

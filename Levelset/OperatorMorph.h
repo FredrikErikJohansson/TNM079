@@ -27,7 +27,7 @@ public:
 
   virtual float ComputeTimestep() {
     // Compute and return a stable timestep
-    return 1;
+      return mLS->GetDx();
   }
 
   virtual void Propagate(float time) {
@@ -49,7 +49,22 @@ public:
 
   virtual float Evaluate(size_t i, size_t j, size_t k) {
     // Compute the rate of change (dphi/dt)
-    return 0;
+
+    Vector3<float> gradient = {0, 0, 0};
+    gradient[0] = mLS->DiffXpm(i, j, k);
+    gradient[1] = mLS->DiffYpm(i, j, k);
+    gradient[2] = mLS->DiffZpm(i, j, k);
+
+    float x = i;
+    float y = j;
+    float z = k;
+    mLS->TransformGridToWorld(x, y, z);
+    float ddx2, ddy2, ddz2; 
+
+    auto v = mTarget->GetValue(x, y, z);
+    Godunov(i, j, k, v, ddx2, ddy2, ddz2);
+    
+    return -v * std::sqrt(ddx2 + ddy2 + ddz2);
   }
 };
 

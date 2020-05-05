@@ -125,7 +125,12 @@ float LevelSet::GetValue(float x, float y, float z) const {
  * Evaluates gradient at (x,y,z) through discrete finite difference scheme.
  */
 Vector3<float> LevelSet::GetGradient(float x, float y, float z) const {
-  return Implicit::GetGradient(x, y, z);
+  TransformWorldToGrid(x, y, z);
+    int i = (int)x;
+    int j = (int)y;
+    int k = (int)z;
+    return Vector3<float>(DiffXm(i, j, k), DiffYm(i, j, k), DiffZm(i, j, k));
+  //return Implicit::GetGradient(x, y, z);
 }
 
 /*!
@@ -219,91 +224,159 @@ int LevelSet::GetNarrowBandWidth() {
 /*! Use the values in the grid (mGrid.GetValue) to compute the differentials */
 // By convention, we use (i,j,k) to represent grid coordinates, while (x,y,z)
 // represents world coordinates.
-float LevelSet::DiffXm(size_t i, size_t j, size_t k) const { return 0; }
+float LevelSet::DiffXm(size_t i, size_t j, size_t k) const { 
+    // minus derivative X
+    float val = mGrid.GetValue(i, j, k) - mGrid.GetValue(i - 1, j, k);
+    return (val / mDx); 
+}
 
 //! \lab4
 /*! Use the values in the grid (mGrid.GetValue) to compute the differentials */
 // By convention, we use (i,j,k) to represent grid coordinates, while (x,y,z)
 // represents world coordinates.
-float LevelSet::DiffXp(size_t i, size_t j, size_t k) const { return 0; }
+float LevelSet::DiffXp(size_t i, size_t j, size_t k) const { 
+    // plus derivative X
+    float val = mGrid.GetValue(i + 1, j, k) - mGrid.GetValue(i, j, k);
+    return (val / mDx); 
+}
 
 //! \lab4
 /*! Use the values in the grid (mGrid.GetValue) to compute the differentials */
 // By convention, we use (i,j,k) to represent grid coordinates, while (x,y,z)
 // represents world coordinates.
-float LevelSet::DiffXpm(size_t i, size_t j, size_t k) const { return 0; }
+float LevelSet::DiffXpm(size_t i, size_t j, size_t k) const { 
+    // central difference derivative X
+    float val =
+        mGrid.GetValue(i + 1, j, k) - mGrid.GetValue(i - 1, j, k);
+    return (val / (2.0f * mDx));
+    
+}
 
 //! \lab4
 /*! Use the values in the grid (mGrid.GetValue) to compute the differentials */
 // By convention, we use (i,j,k) to represent grid coordinates, while (x,y,z)
 // represents world coordinates.
-float LevelSet::Diff2Xpm(size_t i, size_t j, size_t k) const { return 0; }
+float LevelSet::Diff2Xpm(size_t i, size_t j, size_t k) const {
+    // central difference derivative X 2
+    float val =
+        mGrid.GetValue(i + 1, j, k) - (2.0f * mGrid.GetValue(i, j, k)) + mGrid.GetValue(i - 1, j, k);
+    return (val / (mDx * mDx));
+}
 
 //! \lab4
 /*! Use the values in the grid (mGrid.GetValue) to compute the differentials */
 // By convention, we use (i,j,k) to represent grid coordinates, while (x,y,z)
 // represents world coordinates.
-float LevelSet::DiffYm(size_t i, size_t j, size_t k) const { return 0; }
+float LevelSet::DiffYm(size_t i, size_t j, size_t k) const { 
+    // minus derivative Y
+    float val = mGrid.GetValue(i, j, k) - mGrid.GetValue(i, j - 1, k);
+    return (val / mDx); 
+}
 
 //! \lab4
 /*! Use the values in the grid (mGrid.GetValue) to compute the differentials */
 // By convention, we use (i,j,k) to represent grid coordinates, while (x,y,z)
 // represents world coordinates.
-float LevelSet::DiffYp(size_t i, size_t j, size_t k) const { return 0; }
+float LevelSet::DiffYp(size_t i, size_t j, size_t k) const { 
+    // plus derivative Y
+    float val = mGrid.GetValue(i, j + 1, k) - mGrid.GetValue(i, j, k);
+    return (val / mDx); 
+}
 
 //! \lab4
 /*! Use the values in the grid (mGrid.GetValue) to compute the differentials */
 // By convention, we use (i,j,k) to represent grid coordinates, while (x,y,z)
 // represents world coordinates.
-float LevelSet::DiffYpm(size_t i, size_t j, size_t k) const { return 0; }
+float LevelSet::DiffYpm(size_t i, size_t j, size_t k) const { 
+    // central difference derivative Y
+    float val = mGrid.GetValue(i, j + 1, k) - mGrid.GetValue(i, j - 1, k);
+    return (val / (2.0f * mDx));
+}
 
 //! \lab4
 /*! Use the values in the grid (mGrid.GetValue) to compute the differentials */
 // By convention, we use (i,j,k) to represent grid coordinates, while (x,y,z)
 // represents world coordinates.
-float LevelSet::Diff2Ypm(size_t i, size_t j, size_t k) const { return 0; }
+float LevelSet::Diff2Ypm(size_t i, size_t j, size_t k) const { 
+    // central difference derivative Y 2
+    float val =
+        mGrid.GetValue(i, j + 1, k) - (2.0f * mGrid.GetValue(i, j, k)) + mGrid.GetValue(i, j - 1, k);
+    return (val / (mDx * mDx));
+}
 
 //! \lab4
 /*! Use the values in the grid (mGrid.GetValue) to compute the differentials */
 // By convention, we use (i,j,k) to represent grid coordinates, while (x,y,z)
 // represents world coordinates.
-float LevelSet::DiffZm(size_t i, size_t j, size_t k) const { return 0; }
+float LevelSet::DiffZm(size_t i, size_t j, size_t k) const {
+    // minus derivative Z
+    float val = mGrid.GetValue(i, j, k) - mGrid.GetValue(i, j, k - 1);
+    return (val / mDx); 
+}
 
 //! \lab4
 /*! Use the values in the grid (mGrid.GetValue) to compute the differentials */
 // By convention, we use (i,j,k) to represent grid coordinates, while (x,y,z)
 // represents world coordinates.
-float LevelSet::DiffZp(size_t i, size_t j, size_t k) const { return 0; }
+float LevelSet::DiffZp(size_t i, size_t j, size_t k) const {
+    // plus derivative Z
+    float val = mGrid.GetValue(i, j, k + 1) - mGrid.GetValue(i, j, k);
+    return (val / mDx); 
+}
 
 //! \lab4
 /*! Use the values in the grid (mGrid.GetValue) to compute the differentials */
 // By convention, we use (i,j,k) to represent grid coordinates, while (x,y,z)
 // represents world coordinates.
-float LevelSet::DiffZpm(size_t i, size_t j, size_t k) const { return 0; }
+float LevelSet::DiffZpm(size_t i, size_t j, size_t k) const { 
+    // central difference derivative Z
+    float val = mGrid.GetValue(i, j, k + 1) - mGrid.GetValue(i, j, k - 1);
+    return (val / (2.0f * mDx));
+}
 
 //! \lab4
 /*! Use the values in the grid (mGrid.GetValue) to compute the differentials */
 // By convention, we use (i,j,k) to represent grid coordinates, while (x,y,z)
 // represents world coordinates.
-float LevelSet::Diff2Zpm(size_t i, size_t j, size_t k) const { return 0; }
+float LevelSet::Diff2Zpm(size_t i, size_t j, size_t k) const {
+    // central difference derivative Z 2
+    float val =
+        mGrid.GetValue(i, j, k + 1) - (2.0f * mGrid.GetValue(i, j, k)) + mGrid.GetValue(i, j, k - 1);
+    return (val / (mDx * mDx));
+}
 
 //! \lab4
 /*! Use the values in the grid (mGrid.GetValue) to compute the differentials */
 // By convention, we use (i,j,k) to represent grid coordinates, while (x,y,z)
 // represents world coordinates.
-float LevelSet::Diff2XYpm(size_t i, size_t j, size_t k) const { return 0; }
+float LevelSet::Diff2XYpm(size_t i, size_t j, size_t k) const {
+    // central difference derivative XY 2
+    float val = mGrid.GetValue(i + 1, j + 1, k) - mGrid.GetValue(i + 1, j - 1, k) +
+                mGrid.GetValue(i - 1, j - 1, k) - mGrid.GetValue(i - 1, j + 1, k);
+    return (val / (4.0f * mDx * mDx));
+}
 
 //! \lab4
 /*! Use the values in the grid (mGrid.GetValue) to compute the differentials */
 // By convention, we use (i,j,k) to represent grid coordinates, while (x,y,z)
 // represents world coordinates.
-float LevelSet::Diff2YZpm(size_t i, size_t j, size_t k) const { return 0; }
+float LevelSet::Diff2YZpm(size_t i, size_t j, size_t k) const {
+    // central difference derivative YZ 2
+    float val = mGrid.GetValue(i, j + 1, k + 1) - mGrid.GetValue(i, j + 1, k - 1) +
+                mGrid.GetValue(i, j - 1, k - 1) - mGrid.GetValue(i, j - 1, k + 1);
+    return (val / (4.0f * mDx * mDx));
+}
 
 //! \lab4
 /*! Use the values in the grid (mGrid.GetValue) to compute the differentials */
 // By convention, we use (i,j,k) to represent grid coordinates, while (x,y,z)
 // represents world coordinates.
-float LevelSet::Diff2ZXpm(size_t i, size_t j, size_t k) const { return 0; }
+float LevelSet::Diff2ZXpm(size_t i, size_t j, size_t k) const {
+    // central difference derivative XZ 2
+    float val = mGrid.GetValue(i + 1, j, k + 1) - mGrid.GetValue(i + 1, j, k - 1) +
+            mGrid.GetValue(i - 1, j, k - 1) - mGrid.GetValue(i - 1, j, k + 1);
+    return (val / (4.0f * mDx * mDx));
+}
 
 float LevelSet::WENO(float v1, float v2, float v3, float v4, float v5) const {
   return 0;

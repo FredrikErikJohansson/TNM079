@@ -746,7 +746,7 @@ void FrameMain::AddObjectQuadricPlane(wxCommandEvent &event) {
   Matrix4x4<float> M(m);
 
   Quadric *Q = new Quadric(M);
-  Q->SetBoundingBox(Bbox(-2, 2));
+  Q->SetBoundingBox(Bbox(-1, 1));
   Q->SetMeshSampling(GetMeshSampling());
   Q->SetDifferentialScale(GetDifferentialScale());
   Q->Triangulate<SimpleMesh>();
@@ -1150,7 +1150,7 @@ void FrameMain::LevelsetAdvect(wxCommandEvent &event) {
     LevelSet *LS = dynamic_cast<LevelSet *>(*iter);
     if (LS != NULL) {
       long int iterations = GetIterations();
-      // ConstantVectorField field(Vector3<float>(-1, -1, -1));
+      //ConstantVectorField field(Vector3<float>(-1, -1, -1));
       VortexVectorField field;
       OperatorAdvect oper(LS, &field);
       for (long int i = 0; i < iterations; i++) {

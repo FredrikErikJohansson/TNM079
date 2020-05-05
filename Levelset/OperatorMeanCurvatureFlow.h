@@ -35,7 +35,7 @@ public:
 
   virtual float ComputeTimestep() {
     // Compute and return a stable timestep
-    return 1;
+    return mLS->GetDx() * mLS->GetDx() / 6 * mAlpha;
   }
 
   virtual void Propagate(float time) {
@@ -57,7 +57,25 @@ public:
 
   virtual float Evaluate(size_t i, size_t j, size_t k) {
     // Compute the rate of change (dphi/dt)
-    return 0;
+    float dx = mLS->DiffXpm(i, j, k);
+    float dy = mLS->DiffYpm(i, j, k);
+    float dz = mLS->DiffZpm(i, j, k);
+
+    float dxx = mLS->Diff2Xpm(i, j, k);
+    float dyy = mLS->Diff2Ypm(i, j, k);
+    float dzz = mLS->Diff2Zpm(i, j, k);
+
+    float dyz = mLS->Diff2YZpm(i, j, k);
+    float dzx = mLS->Diff2ZXpm(i, j, k);
+    float dxy = mLS->Diff2XYpm(i, j, k);
+
+    float denominator = (2.0f * std::pow((dx * dx + dy * dy + dz * dz), 3.0f / 2.0f));
+    float term1 = ((dx * dx) * (dyy + dzz) - (2.0f * dy * dz * dyz)) / denominator;
+    float term2 = ((dy * dy) * (dxx + dzz) - (2.0f * dx * dz * dzx)) / denominator;
+    float term3 = ((dz * dz) * (dxx + dyy) - (2.0f * dx * dy * dxy)) / denominator;
+    float kappa = term1 + term2 + term3;
+
+    return (mAlpha*kappa*(std::sqrt((dx * dx) + (dy * dy) + (dz * dz))));
   }
 };
 
