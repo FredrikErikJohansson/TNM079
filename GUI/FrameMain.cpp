@@ -1150,8 +1150,8 @@ void FrameMain::LevelsetAdvect(wxCommandEvent &event) {
     LevelSet *LS = dynamic_cast<LevelSet *>(*iter);
     if (LS != NULL) {
       long int iterations = GetIterations();
-      //ConstantVectorField field(Vector3<float>(-1, -1, -1));
-      VortexVectorField field;
+      ConstantVectorField field(Vector3<float>(-1, -1, -1));
+      //VortexVectorField field;
       OperatorAdvect oper(LS, &field);
       for (long int i = 0; i < iterations; i++) {
         oper.Propagate(GetPropagationTime());

@@ -49,12 +49,6 @@ public:
 
   virtual float Evaluate(size_t i, size_t j, size_t k) {
     // Compute the rate of change (dphi/dt)
-
-    Vector3<float> gradient = {0, 0, 0};
-    gradient[0] = mLS->DiffXpm(i, j, k);
-    gradient[1] = mLS->DiffYpm(i, j, k);
-    gradient[2] = mLS->DiffZpm(i, j, k);
-
     float x = i;
     float y = j;
     float z = k;

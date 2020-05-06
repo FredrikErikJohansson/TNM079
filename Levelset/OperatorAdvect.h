@@ -77,7 +77,7 @@ public:
       gradient[1] = (v[1] >= 0) ? mLS->DiffYm(i, j, k) : mLS->DiffYp(i, j, k);
       gradient[2] = (v[2] >= 0) ? mLS->DiffZm(i, j, k) : mLS->DiffZp(i, j, k);
 
-     return ((-v) * gradient);
+     return (-1 * (v * gradient));
   }
 };
 
