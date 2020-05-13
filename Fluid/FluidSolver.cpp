@@ -235,7 +235,7 @@ void FluidSolver::EnforceDirichletBoundaryCondition() {
           }
 
           mVelocityField.SetValue(i, j, k, field);
-        }       
+        } 
       }
     }
   }
@@ -327,14 +327,6 @@ void FluidSolver::Projection() {
   // Rebuild the sparse matrix structure
   A.endPush();
 
-  //Add volume
-  
-  if (missingVolume > 0) {
-      for (auto bi : b) {
-          bi -= missingVolume;
-      }
-  }
-	
   // Solve Ax=b using conjugate gradient
   std::cerr << "Conjugate gradient solver... ";
   ConjugateGradient<CoordMatrix<float, size_t>, std::vector<float>, float> CG(
