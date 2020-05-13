@@ -21,12 +21,9 @@ Quadric::~Quadric() {}
  * coefficient matrix by GetTransform() ONCE (see Section 2.2 in lab text).
  */
 float Quadric::GetValue(float x, float y, float z) const { 
-    Vector4<float> pWorld(x, y, z, 1);
-    Matrix4x4<float> M = mWorld2Obj;
-    Matrix4x4<float> Q = mQuadric;
-    Matrix4x4<float> Qhat = M.Inverse().Transpose() * Q * M.Inverse();
-    float val = pWorld * (Qhat * pWorld);
-    return val;
+	TransformW2O(x, y, z);
+    Vector4<float> xVec(x, y, z, 1.0f);
+    return xVec * (mQuadric * xVec);
 }
 
 /*!
